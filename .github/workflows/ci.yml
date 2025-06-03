@@ -1,0 +1,128 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: motorcycle-club-hub-api
+  AZURE_ACR_NAME: motorcycleclubhubacr
+  API_DIRECTORY: ./src/api
+  DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup PNPM
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Build Next.js app
+      run: pnpm build
+    
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.API_DIRECTORY }}
+
+    - name: Build API
+      run: dotnet build ${{ env.API_DIRECTORY }} --configuration Release --no-restore
+
+    - name: Run EF Core migrations
+      run: |
+        dotnet tool install --global dotnet-ef
+        cd ${{ env.API_DIRECTORY }}
+        dotnet ef database update --connection "${{ env.DATABASE_CONNECTION_STRING }}"
+
+    - name: Upload Next.js build
+      uses: actions/upload-artifact@v3
+      with:
+        name: nextjs-build
+        path: out/
+
+    - name: Upload API build
+      uses: actions/upload-artifact@v3
+      with:
+        name: api-build
+        path: ${{ env.API_DIRECTORY }}/bin/Release
+
+  deploy-static-web-app:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download Next.js build
+      uses: actions/download-artifact@v3
+      with:
+        name: nextjs-build
+        path: out/
+
+    - name: Deploy to Azure Static Web Apps
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "out"
+        skip_app_build: true
+        
+  deploy-api:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download API build
+      uses: actions/download-artifact@v3
+      with:
+        name: api-build
+        path: api-build/
+
+    - name: Azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Build and push Docker image to ACR
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - run: |
+        docker build -f src/api/Dockerfile -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }} .
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }}
+        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }} ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
+
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        images: ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }}
