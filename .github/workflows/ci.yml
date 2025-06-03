@@ -47,14 +47,15 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Restore & Build API
+      working-directory: ${{ env.API_DIRECTORY }}   # ‹— cd into ./src/api
       run: |
-        dotnet restore $API_DIRECTORY
-        dotnet build   $API_DIRECTORY --configuration Release --no-restore
+        dotnet restore
+        dotnet build --configuration Release --no-restore
 
     - name: Run EF Core migrations
+      working-directory: ${{ env.API_DIRECTORY }}
       run: |
         dotnet tool install --global dotnet-ef
-        cd $API_DIRECTORY
         dotnet ef database update --connection "$DATABASE_CONNECTION_STRING"
 
     - name: Upload Next.js build
