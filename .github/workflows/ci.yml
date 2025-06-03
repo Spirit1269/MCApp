@@ -61,7 +61,7 @@ jobs:
         path: out/
 
     - name: Upload API build
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: api-build
         path: ${{ env.API_DIRECTORY }}/bin/Release
@@ -98,7 +98,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Download API build
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: api-build
         path: api-build/
