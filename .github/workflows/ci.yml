@@ -38,8 +38,8 @@ jobs:
 
     - name: Build Next.js app
       run: |
-        pnpm next build
-        pnpm next export -o out            # creates ./out for Static Web Apps
+        pnpm next build                       # output: 'export' in next.config.js
+        pnpm next export --outdir out         # ← use --outdir, not -o
     
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
