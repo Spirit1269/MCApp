@@ -1,52 +1,54 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  push:          { branches: [ main ] }
+  pull_request:  { branches: [ main ] }
   workflow_dispatch:
 
 env:
-
-  API_DIRECTORY: ./src/api
+  API_DIRECTORY: src/api                    # <- actual path to api.csproj folder
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
 
+#####################################################################
+# 1. BUILD JOB
+#####################################################################
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag }}   # pass container tag downstream
     steps:
+    # ────────── checkout ──────────
     - uses: actions/checkout@v3
 
-    - name: Setup PNPM
-      uses: pnpm/action-setup@v2
-      with:
-        version: 10.11.1
-        run_install: false      # we'll run it explicitly
+    # ────────── Node + pnpm, build Next.js static site ──────────
+    - uses: pnpm/action-setup@v2
+      with: { version: 10.11.1, run_install: false }
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - uses: actions/setup-node@v3
       with:
-        node-version: '18'
-        cache: 'pnpm'
-        cache-dependency-path: pnpm-lock.yaml   # ← added
+        node-version: 18
+        cache: pnpm
+        cache-dependency-path: pnpm-lock.yaml
 
-    - name: Install dependencies
+    - name: Install JS deps
       run: pnpm install --frozen-lockfile
 
-    - name: Build Next.js app
-      run: |
-        pnpm next build                      
+    - name: Build Next.js (static export)
+      run: pnpm next build    # `output: "export"` is in next.config.js
 
-    
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
+    - name: Upload static site
+      uses: actions/upload-artifact@v4
       with:
-        dotnet-version: '8.0.x'
+        name: nextjs-build
+        path: out/
 
-    - name: Restore & Build API
-      working-directory: ${{ env.API_DIRECTORY }}   # ‹— cd into ./src/api
+    # ────────── .NET build & EF migration ──────────
+    - uses: actions/setup-dotnet@v3
+      with: { dotnet-version: 8.0.x }
+
+    - name: Restore & build API
+      working-directory: ${{ env.API_DIRECTORY }}
       run: |
         dotnet restore
         dotnet build --configuration Release --no-restore
@@ -54,14 +56,8 @@ jobs:
     - name: Run EF Core migrations
       working-directory: ${{ env.API_DIRECTORY }}
       run: |
-        dotnet tool install --global dotnet-ef
+        dotnet tool install -g dotnet-ef
         dotnet ef database update --connection "$DATABASE_CONNECTION_STRING"
-
-    - name: Upload Next.js build
-      uses: actions/upload-artifact@v4
-      with:
-        name: nextjs-build
-        path: out/
 
     - name: Upload API build
       uses: actions/upload-artifact@v4
@@ -69,66 +65,64 @@ jobs:
         name: api-build
         path: ${{ env.API_DIRECTORY }}/bin/Release
 
+    # ────────── Build container & push to ACR ──────────
+    - name: Docker meta
+      id: meta
+      run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
+        username:      ${{ secrets.ACR_USERNAME }}
+        password:      ${{ secrets.ACR_PASSWORD }}
+
+    - name: Build & push image
+      run: |
+        docker build -f ${{ env.API_DIRECTORY }}/Dockerfile \
+          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} .
+        docker push    ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }}
+        docker tag     ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} \
+                       ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
+        docker push    ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
+
+#####################################################################
+# 2. DEPLOY STATIC WEB APP
+#####################################################################
   deploy-static-web-app:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-
     steps:
     - uses: actions/checkout@v3
 
-    - name: Download Next.js build
-      uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v4
       with:
         name: nextjs-build
         path: out/
 
-    - name: Deploy to Azure Static Web Apps
-      uses: Azure/static-web-apps-deploy@v1
+    - uses: Azure/static-web-apps-deploy@v1
       with:
         azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        action: "upload"
-        app_location: "out"
+        repo_token:                      ${{ secrets.GITHUB_TOKEN }}
+        action: upload
+        app_location: out
         skip_app_build: true
-        
+
+#####################################################################
+# 3. DEPLOY API CONTAINER
+#####################################################################
   deploy-api:
     needs: build
     runs-on: ubuntu-latest
-    
-    
     if: github.ref == 'refs/heads/main'
-    environment: production          # this unlocks environment-level secrets
+    environment: production
     steps:
-    - run: echo "Prod DB = ${{ secrets.DATABASE_CONNECTION_STRING }}"  
-    - uses: actions/checkout@v3
-
-    - name: Download API build
-      uses: actions/download-artifact@v4
-      with:
-        name: api-build
-        path: api-build/
-
-    - name: Azure login
-      uses: azure/login@v1
+    - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Build and push Docker image to ACR
-      uses: azure/docker-login@v1
-      with:
-        login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
-
-    - run: |
-        docker build -f ${{ env.API_DIRECTORY }}/Dockerfile \-t ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }} .
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }}
-        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }} ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
-
-    - name: Deploy to Azure App Service
-      uses: azure/webapps-deploy@v2
+    - uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        images: ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ github.sha }}
+        images:   ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ needs.build.outputs.image-tag }}
+
