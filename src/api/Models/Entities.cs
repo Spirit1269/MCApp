@@ -34,6 +34,9 @@ namespace MotorcycleClubHub.Data
         public string DisplayName { get; set; } = string.Empty;
         public string? AvatarUrl { get; set; }
         public string? StripeCustomerId { get; set; }
+        // Member (add at bottom)
+        public ICollection<Role> Roles { get; set; } = new List<Role>();
+
     }
 
     public class Role
@@ -43,6 +46,9 @@ namespace MotorcycleClubHub.Data
         public string RoleName { get; set; } = string.Empty;
         public string ScopeId { get; set; } = string.Empty;
         public string ScopeType { get; set; } = string.Empty; // 'club', 'district', 'chapter'
+        // Role (optional back-reference)
+        public Member? Member { get; set; }
+
     }
 
     public class Post
