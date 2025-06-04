@@ -77,11 +77,11 @@ namespace MotorcycleClubHub.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.RoleName).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.ScopeType).IsRequired().HasMaxLength(10);
-                entity.HasOne<Member>()
-                      .WithMany()
-                      .HasForeignKey(r => r.MemberId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
+                entity.HasOne(r => r.Member)          // navigation property
+                    .WithMany(m => m.Roles)         // navigation on Member
+                    .HasForeignKey(r => r.MemberId) // FK column
+                    .OnDelete(DeleteBehavior.Cascade);
+    });
 
             // Post
             modelBuilder.Entity<Post>(entity =>
