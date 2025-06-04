@@ -16,6 +16,7 @@ export interface Chapter {
   id: string;
   districtId: string;
   name: string;
+  clubhouse: boolean;
 }
 
 export interface Member {
@@ -23,6 +24,13 @@ export interface Member {
   chapterId: string;
   email: string;
   displayName: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   avatarUrl: string | null;
   stripeCustomerId: string | null;
 }
