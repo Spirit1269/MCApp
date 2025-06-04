@@ -40,7 +40,7 @@ namespace api.Migrations
 
                     b.HasIndex("DistrictId");
 
-                    b.ToTable("Chapters");
+                    b.ToTable("Chapters", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Club", b =>
@@ -67,7 +67,7 @@ namespace api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Clubs");
+                    b.ToTable("Clubs", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.District", b =>
@@ -88,7 +88,7 @@ namespace api.Migrations
 
                     b.HasIndex("ClubId");
 
-                    b.ToTable("Districts");
+                    b.ToTable("Districts", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.DuesInvoice", b =>
@@ -121,7 +121,7 @@ namespace api.Migrations
 
                     b.HasIndex("ChapterId");
 
-                    b.ToTable("DuesInvoices");
+                    b.ToTable("DuesInvoices", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Event", b =>
@@ -165,7 +165,7 @@ namespace api.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Member", b =>
@@ -198,7 +198,7 @@ namespace api.Migrations
 
                     b.HasIndex("ChapterId");
 
-                    b.ToTable("Members");
+                    b.ToTable("Members", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Payment", b =>
@@ -220,7 +220,7 @@ namespace api.Migrations
 
                     b.HasIndex("DuesInvoiceId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Post", b =>
@@ -259,7 +259,7 @@ namespace api.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.RideRoute", b =>
@@ -293,7 +293,7 @@ namespace api.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("RideRoutes");
+                    b.ToTable("RideRoutes", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Role", b =>
@@ -323,7 +323,7 @@ namespace api.Migrations
 
                     b.HasIndex("MemberId");
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Chapter", b =>

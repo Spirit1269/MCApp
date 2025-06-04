@@ -38,7 +38,7 @@ jobs:
 
     - name: Build Next.js app
       run: |
-        pnpm next build                       # output: 'export' in next.config.js
+        pnpm next build                      
 
     
     - name: Setup .NET Core
@@ -56,6 +56,7 @@ jobs:
       working-directory: ${{ env.API_DIRECTORY }}
       run: |
         dotnet tool install --global dotnet-ef
+        cd $API_DIRECTORY
         dotnet ef database update --connection "$DATABASE_CONNECTION_STRING"
 
     - name: Upload Next.js build
@@ -96,9 +97,12 @@ jobs:
   deploy-api:
     needs: build
     runs-on: ubuntu-latest
+    
+    
     if: github.ref == 'refs/heads/main'
-
+    environment: production          # this unlocks environment-level secrets
     steps:
+    - run: echo "Prod DB = ${{ secrets.DATABASE_CONNECTION_STRING }}"  
     - uses: actions/checkout@v3
 
     - name: Download API build

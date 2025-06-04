@@ -10,8 +10,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(opts =>
     opts.UseSqlServer(
-        builder.Configuration.GetConnectionString("Default") ??
-        throw new InvalidOperationException("Connection string 'Default' not found.")));
+        builder.Configuration.GetConnectionString("Default") // from appsettings OR AZURE
+        ?? Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
+        ?? throw new InvalidOperationException("No DB connection string configured")));
 
 builder.Services.AddControllers();
 
