@@ -89,12 +89,12 @@ jobs:
       run: |
         docker build \
           -f ${{ env.API_DIRECTORY }}/Dockerfile \
-          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} \
+          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:${{ steps.meta.outputs.tag }} \
           .
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }}
-        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} \
-                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:${{ steps.meta.outputs.tag }}
+        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:${{ steps.meta.outputs.tag }} \
+                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:latest
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:latest
 
 #####################################################################
 # 2. DEPLOY STATIC WEB APP
