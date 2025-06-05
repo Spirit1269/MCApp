@@ -74,14 +74,19 @@ jobs:
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-    # 1) Log in to Azure with your Service Principal:
     - name: Azure login for ACR
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    # 2) Now use CLI mode docker‐login:
-    - uses: azure/docker-login@v1
+    - name: Verify Azure CLI session
+      run: |
+        az account show
+        echo "ACR name is: $AZURE_ACR_NAME"
+        az acr list --query "[].{name:name, loginServer:loginServer}" -o table
+
+    - name: Docker login to ACR
+      uses: azure/docker-login@v1
       with:
         login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
 
