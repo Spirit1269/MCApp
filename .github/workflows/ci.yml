@@ -66,23 +66,32 @@ jobs:
         path: ${{ env.API_DIRECTORY }}/bin/Release
 
     # ────────── Build container & push to ACR ──────────
+     # ────────── Docker login & push ──────────
     - name: Docker meta
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
+    # 1) Log in to Azure with your Service Principal:
+    - name: Azure login for ACR
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # 2) Now use CLI mode docker‐login:
     - uses: azure/docker-login@v1
       with:
         login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-        
 
     - name: Build & push image
       run: |
-        docker build -f ${{ env.API_DIRECTORY }}/Dockerfile \
-          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} .
-        docker push    ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }}
-        docker tag     ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} \
-                       ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
-        docker push    ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
+        docker build \
+          -f ${{ env.API_DIRECTORY }}/Dockerfile \
+          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} \
+          .
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }}
+        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ steps.meta.outputs.tag }} \
+                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:latest
 
 #####################################################################
 # 2. DEPLOY STATIC WEB APP
