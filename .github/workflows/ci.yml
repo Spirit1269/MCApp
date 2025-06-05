@@ -6,8 +6,11 @@ on:
   workflow_dispatch:
 
 env:
-  API_DIRECTORY: src/api                    # <- actual path to api.csproj folder
+  AZURE_ACR_NAME: motorcycleclubhubacr   # ← your actual ACR name, without “.azurecr.io”
+  AZURE_WEBAPP_NAME: MCApp
+  API_DIRECTORY: src/api
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
+
 
 #####################################################################
 # 1. BUILD JOB
