@@ -79,16 +79,8 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Verify Azure CLI session
-      run: |
-        az account show
-        echo "ACR name is: $AZURE_ACR_NAME"
-        az acr list --query "[].{name:name, loginServer:loginServer}" -o table
-
-    - name: Docker login to ACR
-      uses: azure/docker-login@v1
-      with:
-        login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
+    - name: Docker login to ACR (CLI)
+      run: az acr login --name ${{ env.AZURE_ACR_NAME }}
 
     - name: Build & push image
       run: |
