@@ -106,6 +106,7 @@ jobs:
         repo_token:                      ${{ secrets.GITHUB_TOKEN }}
         action: upload
         app_location: out
+        api_location: ""             # <- no serverless API in SWA
         skip_app_build: true
 
 #####################################################################
