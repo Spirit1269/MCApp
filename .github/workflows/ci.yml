@@ -86,12 +86,12 @@ jobs:
       run: |
         docker build \
           -f ${{ env.API_DIRECTORY }}/Dockerfile \
-          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
+          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
           .
         docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
-        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
-                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:latest
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:latest
+        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
+                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
 
 #####################################################################
 # 2. DEPLOY STATIC WEB APP
