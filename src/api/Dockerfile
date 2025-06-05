@@ -7,7 +7,7 @@ RUN dotnet restore
 
 # Copy the rest of the source code
 COPY ["src/api/.", "./"]
-COPY ["src/api/models/.", "./Models/"]
+COPY ["src/api/.", "./"]
 
 # Build the application
 RUN dotnet publish -c Release -o out
