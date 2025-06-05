@@ -7,7 +7,7 @@ RUN dotnet restore
 
 # Copy the rest of the source code
 COPY ["src/api/.", "./"]
-COPY ["src/db/models/.", "./Models/"]
+COPY ["src/api/models/.", "./Models/"]
 
 # Build the application
 RUN dotnet publish -c Release -o out
@@ -22,4 +22,4 @@ EXPOSE 80
 EXPOSE 443
 
 # Set the entry point
-ENTRYPOINT ["dotnet", "MotorcycleClubHub.Api.dll"]
+ENTRYPOINT ["dotnet", "api.dll"]
