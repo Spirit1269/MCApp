@@ -7,7 +7,7 @@ on:
 
 env:
   AZURE_ACR_NAME: motorcycleclubhubacr   # ← your actual ACR name, without “.azurecr.io”
-  AZURE_WEBAPP_NAME: MCApp
+  AZURE_WEBAPP_NAME: mcapp
   API_DIRECTORY: src/api
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
 
@@ -86,12 +86,12 @@ jobs:
       run: |
         docker build \
           -f ${{ env.API_DIRECTORY }}/Dockerfile \
-          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:${{ steps.meta.outputs.tag }} \
+          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
           .
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:${{ steps.meta.outputs.tag }}
-        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:${{ steps.meta.outputs.tag }} \
-                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:latest
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/MCApp:latest
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
+        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
+                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:latest
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/ ${{ env.AZURE_WEBAPP_NAME }}:latest
 
 #####################################################################
 # 2. DEPLOY STATIC WEB APP
