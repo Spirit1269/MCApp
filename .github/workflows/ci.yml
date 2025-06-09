@@ -74,12 +74,17 @@ jobs:
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-    - name: Azure login for ACR
+    
+    # 1) Log in to Azure via SPN (already in your workflow):
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # 2) Use Azure CLI to auth against ACR:
+    - name: ACR login via Azure CLI
       run: az acr login --name ${{ env.AZURE_ACR_NAME }}
 
-    - name: Docker login to ACR (CLI)
-      run: az acr login --name ${{ env.AZURE_ACR_NAME }}
-
+    # 3) Build & push with plain docker commands:
     - name: Build & push image
       run: |
         docker build \
