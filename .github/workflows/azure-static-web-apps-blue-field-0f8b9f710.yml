@@ -73,18 +73,24 @@ jobs:
     - name: Docker meta
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+    # ────────── Parse SPN out of the AZURE_CREDENTIALS secret ──────────
+    - name: Extract SPN credentials
+      run: |
+        echo "AZURE_CLIENT_ID=$(jq -r .clientId <<< '${{ secrets.AZURE_CREDENTIALS }}')"  >> $GITHUB_ENV
+        echo "AZURE_CLIENT_SECRET=$(jq -r .clientSecret <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
+        echo "AZURE_TENANT_ID=$(jq -r .tenantId <<< '${{ secrets.AZURE_CREDENTIALS }}')"     >> $GITHUB_ENV
+
 
     
-    # 1) Log in to Azure via SPN (already in your workflow):
-    - uses: azure/login@v1
+    # ────────── Log in to ACR with Docker’s login-action ──────────
+    - name: Log in to ACR
+      uses: docker/login-action@v2
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        registry: ${{ env.AZURE_ACR_NAME }}.azurecr.io
+        username: ${{ env.AZURE_CLIENT_ID }}
+        password: ${{ env.AZURE_CLIENT_SECRET }}
 
-    # 2) Use Azure CLI to auth against ACR:
-    - name: Docker login to ACR
-      uses: azure/docker-login@v1
-      with:
-        login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
+
     # 3) Build & push with plain docker commands:
     - name: Build & push image
       run: |
