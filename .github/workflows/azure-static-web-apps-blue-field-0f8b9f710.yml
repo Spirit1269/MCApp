@@ -68,22 +68,25 @@ jobs:
         name: api-build
         path: ${{ env.API_DIRECTORY }}/bin/Release
 
-       # ────────── Build container & push to ACR ──────────
+          # ────────── Build container & push to ACR ──────────
     - name: Docker meta
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-    # 1) Sign in to Azure CLI with your Service Principal
+    # 1) Log your GitHub Actions SPN into Azure
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    # 2) Login to your ACR via the Azure CLI (gets an AAD token for Docker)
-    - name: Login to ACR
-      run: az acr login --name ${{ env.AZURE_ACR_NAME }}
+    # 2) Log into ACR using that SPN via the docker/login‐action
+    - name: Log in to ACR
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.AZURE_ACR_NAME }}.azurecr.io
+        loginWithAzure: true
 
-    # 3) Build and push your image
-    - name: Build & push Docker image
+    # 3) Build, tag & push
+    - name: Build & push image
       run: |
         docker build \
           -f ${{ env.API_DIRECTORY }}/Dockerfile \
@@ -97,6 +100,7 @@ jobs:
           ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
 
         docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
+
 
 
 #####################################################################
