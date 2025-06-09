@@ -68,39 +68,35 @@ jobs:
         name: api-build
         path: ${{ env.API_DIRECTORY }}/bin/Release
 
-          # ────────── Build container & push to ACR ──────────
+             # ────────── Build container & push to ACR ──────────
     - name: Docker meta
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-    # 1) Log your GitHub Actions SPN into Azure
-    - uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    # 1) Extract SPN creds into env-vars
+    - name: Set up ACR credentials
+      run: |
+        echo "AZURE_CLIENT_ID=$(jq -r .clientId   <<< '${{ secrets.AZURE_CREDENTIALS }}')"   >> $GITHUB_ENV
+        echo "AZURE_CLIENT_SECRET=$(jq -r .clientSecret <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
 
-    # 2) Log into ACR using that SPN via the docker/login‐action
+    # 2) Log in to your registry via Docker’s login-action
     - name: Log in to ACR
       uses: docker/login-action@v2
       with:
         registry: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-        loginWithAzure: true
+        username: ${{ env.AZURE_CLIENT_ID }}
+        password: ${{ env.AZURE_CLIENT_SECRET }}
 
-    # 3) Build, tag & push
+    # 3) Build & push in one go
     - name: Build & push image
-      run: |
-        docker build \
-          -f ${{ env.API_DIRECTORY }}/Dockerfile \
-          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
-          .
-
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
-
-        docker tag \
-          ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        file: ${{ env.API_DIRECTORY }}/Dockerfile
+        push: true
+        tags: |
+          ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
           ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
-
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
-
 
 
 #####################################################################

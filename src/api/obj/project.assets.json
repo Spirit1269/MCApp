@@ -5172,8 +5172,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Spirit\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Spirit\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -5184,12 +5183,8 @@
       "packagesPath": "C:\\Users\\Spirit\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\Spirit\\OneDrive\\Documents\\Coding\\MCApp\\src\\api\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
         "C:\\Users\\Spirit\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
