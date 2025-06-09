@@ -68,39 +68,36 @@ jobs:
         name: api-build
         path: ${{ env.API_DIRECTORY }}/bin/Release
 
-    # ────────── Build container & push to ACR ──────────
-     # ────────── Docker login & push ──────────
+       # ────────── Build container & push to ACR ──────────
     - name: Docker meta
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
-    # ────────── Parse SPN out of the AZURE_CREDENTIALS secret ──────────
-    - name: Extract SPN credentials
-      run: |
-        echo "AZURE_CLIENT_ID=$(jq -r .clientId <<< '${{ secrets.AZURE_CREDENTIALS }}')"  >> $GITHUB_ENV
-        echo "AZURE_CLIENT_SECRET=$(jq -r .clientSecret <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-        echo "AZURE_TENANT_ID=$(jq -r .tenantId <<< '${{ secrets.AZURE_CREDENTIALS }}')"     >> $GITHUB_ENV
 
-
-    
-    # ────────── Log in to ACR with Docker’s login-action ──────────
-    - name: Log in to ACR
-      uses: docker/login-action@v2
+    # 1) Sign in to Azure CLI with your Service Principal
+    - uses: azure/login@v1
       with:
-        registry: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-        username: ${{ env.AZURE_CLIENT_ID }}
-        password: ${{ env.AZURE_CLIENT_SECRET }}
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    # 2) Login to your ACR via the Azure CLI (gets an AAD token for Docker)
+    - name: Login to ACR
+      run: az acr login --name ${{ env.AZURE_ACR_NAME }}
 
-    # 3) Build & push with plain docker commands:
-    - name: Build & push image
+    # 3) Build and push your image
+    - name: Build & push Docker image
       run: |
         docker build \
           -f ${{ env.API_DIRECTORY }}/Dockerfile \
-          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }} .
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }}
-        docker tag ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }} \
-                    ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
+          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
+          .
+
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
+
+        docker tag \
+          ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
+          ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
+
         docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
+
 
 #####################################################################
 # 2. DEPLOY STATIC WEB APP
