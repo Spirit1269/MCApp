@@ -79,7 +79,7 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-        username: ${{ env }}
+        username: ${{ env.ACR_USERNAME }}
         password: ${{ env.ACR_PASSWORD }}
 
     - name: Build and push image
