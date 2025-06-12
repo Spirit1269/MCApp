@@ -39,6 +39,23 @@ jobs:
 
     - name: Install JS deps
       run: pnpm install --frozen-lockfile
+      
+    - name: Install Dependencies
+      run: |
+        pnpm install --retry 5 --retry-factor 2 --retry-maxtime 120
+    
+    - name: Cache pnpm dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.pnpm-store
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-
+
+    - name: Setup Alternate NPM Registry
+      run: |
+        echo "registry=https://npm.pkg.github.com/" > ~/.npmrc
+        pnpm install
 
     - name: Build Next.js (static export)
       run: pnpm next build    # `output: "export"` is in next.config.js
