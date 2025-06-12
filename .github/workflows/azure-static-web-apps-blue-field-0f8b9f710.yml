@@ -76,12 +76,13 @@ jobs:
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
     # 1) Log in to ACR via admin credentials
-    - name: Log in to ACR
-      uses: docker/login-action@v2
-      with:
-        registry: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
+    - name: Login to Azure Container Registry
+      run: |
+        az acr login --name motorcycleclubhubacr
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
     - name: Build & push image
       run: |
