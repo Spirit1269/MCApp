@@ -13,8 +13,6 @@ env:
   API_DIRECTORY: src/api
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
   AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-  PNPM_RETRY_COUNT: 5
-  PNPM_RETRY_INTERVAL: 30
 
 
 #####################################################################
@@ -47,9 +45,7 @@ jobs:
         echo "registry=https://registry.npmjs.org/" > ~/.npmrc
 
         # low concurrency + retries to survive transient 503s
-        pnpm install \
-          --frozen-lockfile \
-          --network-concurrency=1 \
+         pnpm install --fetch-retries=5 --fetch-timeout=60000
 
 
     - name: Build Next.js (static export)
