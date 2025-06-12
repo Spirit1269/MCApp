@@ -103,7 +103,7 @@ export function Hero() {
             <MapPin className="h-12 w-12 text-chart-1" />
             <h3 className="mt-4 text-xl font-bold text-white">Ride Routes</h3>
             <p className="mt-2 text-gray-300">
-              Plan and share detailed ride routes with turn-by-turn directions.
+              Plan and share detailed ride routes, with gas stops and with turn-by-turn directions.
             </p>
           </motion.div>
         </div>
