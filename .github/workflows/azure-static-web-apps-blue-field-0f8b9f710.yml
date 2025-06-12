@@ -50,7 +50,6 @@ jobs:
         pnpm install \
           --frozen-lockfile \
           --network-concurrency=1 \
-          --retry=5
 
 
     - name: Build Next.js (static export)
