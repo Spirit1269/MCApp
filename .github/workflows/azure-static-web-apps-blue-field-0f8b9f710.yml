@@ -12,6 +12,7 @@ env:
   AZURE_WEBAPP_NAME: mcapp
   API_DIRECTORY: src/api
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
+  AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
 
 #####################################################################
@@ -75,6 +76,14 @@ jobs:
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
+    steps:
+      - name: Set up Azure credentials
+        run: |
+          echo "${AZURE_CREDENTIALS}" > azure-credentials.json
+          export AZURE_CLIENT_ID=$(jq -r .clientId azure-credentials.json)
+          export AZURE_CLIENT_SECRET=$(jq -r .clientSecret azure-credentials.json)
+          export AZURE_TENANT_ID=$(jq -r .tenantId azure-credentials.json)
+      # Now you can run az login using the parsed variables
     # 1) Log in to ACR via admin credentials
     - name: Login to Azure Container Registry
       run: |
