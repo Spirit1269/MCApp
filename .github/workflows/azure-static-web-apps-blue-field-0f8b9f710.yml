@@ -76,29 +76,25 @@ jobs:
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-    steps:
-      - name: Set up Azure credentials
-        run: |
+
+    - name: Set up Azure credentials
+      run: |
           echo "${AZURE_CREDENTIALS}" > azure-credentials.json
           export AZURE_CLIENT_ID=$(jq -r .clientId azure-credentials.json)
           export AZURE_CLIENT_SECRET=$(jq -r .clientSecret azure-credentials.json)
           export AZURE_TENANT_ID=$(jq -r .tenantId azure-credentials.json)
-      # Now you can run az login using the parsed variables
+      
     # 1) Log in to ACR via admin credentials
     - name: Login to Azure Container Registry
       run: |
-        az acr login --name motorcycleclubhubacr
-      env:
-        AZURE_CLIENT_ID: ${{ secrets.AZURE_CREDENTIALS }}
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CREDENTIALS }}
-        AZURE_TENANT_ID: ${{ secrets.AZURE_CREDENTIALS }}
+          az acr login --name motorcycleclubhubacr
 
     - name: Build & push image
       run: |
-        docker build \
-          -f ${{ env.API_DIRECTORY }}/Dockerfile \
-          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }} .
-        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }}
+          docker build \
+            -f ${{ env.API_DIRECTORY }}/Dockerfile \
+            -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }} .
+          docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }}
 
 #####################################################################
 # 2. DEPLOY STATIC WEB APP
