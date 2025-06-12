@@ -80,9 +80,9 @@ jobs:
       run: |
         az acr login --name motorcycleclubhubacr
       env:
-        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CREDENTIALS }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CREDENTIALS }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_CREDENTIALS }}
 
     - name: Build & push image
       run: |
