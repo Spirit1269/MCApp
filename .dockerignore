@@ -1,0 +1,90 @@
+# 1. Version control
+.git/
+.gitignore
+.hg/
+.svn/
+
+# 2. Node.js / TypeScript
+node_modules/
+.npm/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.next/
+
+# 3. C# / .NET
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pdb
+*.cache
+*.dbmdl
+*.bak
+*.log
+*.vs/
+*.vscode/
+*.DS_Store
+src/api/bin/
+src/api/obj/
+
+# 4. Build outputs
+build/
+dist/
+out/
+tmp/
+temp/
+
+# 5. IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 6. Test and debug
+coverage/
+*.coverage
+*.test
+*.spec.*
+__pycache__/
+.pytest_cache/
+
+# 7. Environment and secrets
+.env*
+*.env
+*.pem
+*.key
+*.crt
+config.local.*
+*.local.yml
+
+# 8. Documentation
+README*
+*.md
+docs/
+
+# 9. Docker and Compose
+Dockerfile*
+docker-compose*
+
+# 10. Project-specific
+.bolt/
+codealike.json
+
+# 11. Temporary files
+*.tmp
+*.temp
+local/
+.local/
+
+# 12. Miscellaneous
+*.bak
+*.old
+*.orig
+
+# 13. Ignore OS files
+Thumbs.db
+.DS_Store
+
+# 14. GitHub workflows (not needed in build context)
+.github/

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "/jeqgbcIj9rvNmgrNLdkymor6POcNDAX6YuGE56Sx7/G6AZy3z/ORKtoLdrSefqU6VOSDqvOXY6GU//wkozSxw==",
+  "dgSpecHash": "KW8FRPhcBCplTSut9o+t/hVpxYg1SpqzxN53ySG4YUY+13Lm3F5fjbZJp7bpDkNMotIx8rJZY2jOKpsY34+2Vw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Spirit\\OneDrive\\Documents\\Coding\\MCApp\\src\\api\\api.csproj",
+  "projectFilePath": "E:\\Coding\\MCApp\\src\\api\\api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Spirit\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\Spirit\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
