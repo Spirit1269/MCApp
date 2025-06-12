@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_ACR_NAME: motorcycleclubhubacr   # ← your actual ACR name, without “.azurecr.io”
-  ACR_USERNAME: ${{ secrets.AZURE_CREDENTIALS }}  # ACR admin username
-  ACR_PASSWORD: ${{ secrets.AZURE_CREDENTIALS }}  # ACR admin password
+  AZURE_ACR_NAME: motorcycleclubhubacr
+  ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+  ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
   AZURE_WEBAPP_NAME: mcapp
   API_DIRECTORY: src/api
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
@@ -70,28 +70,31 @@ jobs:
         name: api-build
         path: ${{ env.API_DIRECTORY }}/bin/Release
 
-   # ────────── Build container & push ──────────
+  # ────────── Build container & push ──────────
     - name: Docker meta
       id: meta
       run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-    - name: Docker login to ACR (admin creds)
-      uses: docker/login-action@v2
-      with:
-        registry: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-        username: ${{ env.ACR_USERNAME }}
-        password: ${{ env.ACR_PASSWORD }}
+    # 1) Log in to ACR via admin credentials
+    - name: Docker login to ACR
+      run: |
+        echo "${{ secrets.ACR_PASSWORD }}" \
+          | docker login ${{ env.AZURE_ACR_NAME }}.azurecr.io \
+              --username ${{ secrets.ACR_USERNAME }} \
+              --password-stdin
 
-    - name: Build and push image
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        file: ${{ env.API_DIRECTORY }}/Dockerfile
-        push: true
-        tags: |
-          ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
+    # 2) Build & push
+    - name: Build & push image
+      run: |
+        docker build \
+          -f ${{ env.API_DIRECTORY }}/Dockerfile \
+          -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
+          .
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
+        docker tag \
+          ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }} \
           ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
-
+        docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
 
 #####################################################################
 # 2. DEPLOY STATIC WEB APP
