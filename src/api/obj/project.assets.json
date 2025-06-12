@@ -5177,22 +5177,19 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Spirit\\OneDrive\\Documents\\Coding\\MCApp\\src\\api\\api.csproj",
+      "projectUniqueName": "E:\\Coding\\MCApp\\src\\api\\api.csproj",
       "projectName": "api",
-      "projectPath": "C:\\Users\\Spirit\\OneDrive\\Documents\\Coding\\MCApp\\src\\api\\api.csproj",
+      "projectPath": "E:\\Coding\\MCApp\\src\\api\\api.csproj",
       "packagesPath": "C:\\Users\\Spirit\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Spirit\\OneDrive\\Documents\\Coding\\MCApp\\src\\api\\obj\\",
+      "outputPath": "E:\\Coding\\MCApp\\src\\api\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Spirit\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Spirit\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
