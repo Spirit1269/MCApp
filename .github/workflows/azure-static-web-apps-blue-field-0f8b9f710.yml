@@ -7,142 +7,141 @@ on:
 
 env:
   AZURE_ACR_NAME: motorcycleclubhubacr
-  ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
-  ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
   AZURE_WEBAPP_NAME: mcapp
   API_DIRECTORY: src/api
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
-  AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-
-#####################################################################
+###############################################################################
 # 1. BUILD JOB
-#####################################################################
+###############################################################################
 jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      image-tag: ${{ steps.meta.outputs.tag }}   # pass container tag downstream
+      image-tag: ${{ steps.meta.outputs.tag }}
     steps:
-    # ────────── checkout ──────────
-    - uses: actions/checkout@v3
+      # ─────────────────── checkout ───────────────────
+      - uses: actions/checkout@v3
 
-        # ────────── Node + pnpm ──────────
-    - uses: pnpm/action-setup@v2
-      with:
-        version: 10.11.1
-        run_install: false
+      # ────────── Node + pnpm ──────────
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10.11.1
+          run_install: false
 
-    - name: Cache pnpm store
-      uses: actions/cache@v3
-      with:
-        path: ~/.pnpm-store
-        key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-    - name: Force npm registry & install JS deps
-      run: |
-        # make sure we hit the public registry
-        echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+      - name: Force npm registry & install JS deps
+        run: |
+          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+          pnpm install \
+            --frozen-lockfile \
+            --network-concurrency=1 \
+            --fetch-retries=5 \
+            --fetch-retry-factor=2 \
+            --fetch-retry-mintimeout=10000 \
+            --fetch-timeout=120000
 
-        # low concurrency + retries to survive transient 503s
-         pnpm install --fetch-retries=5 --fetch-timeout=60000
+      - name: Build Next.js (static export)
+        run: pnpm next build    # `output: "export"` in next.config.js
 
+      - name: Upload static site
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: out/
 
-    - name: Build Next.js (static export)
-      run: pnpm next build    # `output: "export"` is in next.config.js
+      # ────────── .NET build & EF migration ──────────
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
 
-    - name: Upload static site
-      uses: actions/upload-artifact@v4
-      with:
-        name: nextjs-build
-        path: out/
+      - name: Restore & build API
+        working-directory: ${{ env.API_DIRECTORY }}
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
 
-    # ────────── .NET build & EF migration ──────────
-    - uses: actions/setup-dotnet@v3
-      with: { dotnet-version: 8.0.x }
+      - name: Run EF Core migrations
+        working-directory: ${{ env.API_DIRECTORY }}
+        run: |
+          dotnet tool install -g dotnet-ef
+          dotnet ef database update --connection "$DATABASE_CONNECTION_STRING"
 
-    - name: Restore & build API
-      working-directory: ${{ env.API_DIRECTORY }}
-      run: |
-        dotnet restore
-        dotnet build --configuration Release --no-restore
+      - name: Upload API build
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-build
+          path: ${{ env.API_DIRECTORY }}/bin/Release
 
-    - name: Run EF Core migrations
-      working-directory: ${{ env.API_DIRECTORY }}
-      run: |
-        dotnet tool install -g dotnet-ef
-        dotnet ef database update --connection "$DATABASE_CONNECTION_STRING"
+      # ────────── Compute image tag ──────────
+      - name: Docker meta
+        id: meta
+        run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-    - name: Upload API build
-      uses: actions/upload-artifact@v4
-      with:
-        name: api-build
-        path: ${{ env.API_DIRECTORY }}/bin/Release
+      # ────────── Azure login & ACR login ──────────
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  # ────────── Build container & push ──────────
-    - name: Docker meta
-      id: meta
-      run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+      - name: Login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
 
+      # ────────── Build & push container ──────────
+      - name: Build and push image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{ env.API_DIRECTORY }}/Dockerfile
+          push: true
+          tags: |
+            ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
 
-    - name: Set up Azure credentials
-      run: |
-          echo "${AZURE_CREDENTIALS}" > azure-credentials.json
-          export AZURE_CLIENT_ID=$(jq -r .clientId azure-credentials.json)
-          export AZURE_CLIENT_SECRET=$(jq -r .clientSecret azure-credentials.json)
-          export AZURE_TENANT_ID=$(jq -r .tenantId azure-credentials.json)
-      
-    # 1) Log in to ACR via admin credentials
-    - name: Login to Azure Container Registry
-      run: |
-          az acr login --name motorcycleclubhubacr
-
-    - name: Build & push image
-      run: |
-          docker build \
-            -f ${{ env.API_DIRECTORY }}/Dockerfile \
-            -t ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }} .
-          docker push ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }}
-
-#####################################################################
+###############################################################################
 # 2. DEPLOY STATIC WEB APP
-#####################################################################
+###############################################################################
   deploy-static-web-app:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - uses: actions/download-artifact@v4
-      with:
-        name: nextjs-build
-        path: out/
+      - uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: out/
 
-    - uses: Azure/static-web-apps-deploy@v1
-      with:
-        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLUE_FIELD_0F8B9F710 }}
-        repo_token:                      ${{ secrets.GITHUB_TOKEN }}
-        action: upload
-        app_location: out
-        api_location: ""             # <- no serverless API in SWA
-        skip_app_build: true
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLUE_FIELD_0F8B9F710 }}
+          repo_token:                      ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: out
+          api_location: ""             # no SWA serverless API
 
-#####################################################################
+###############################################################################
 # 3. DEPLOY API CONTAINER
-#####################################################################
+###############################################################################
   deploy-api:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: production
     steps:
-    - uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        images:   ${{ env.AZURE_ACR_NAME }}.azurecr.io/motorcycle-club-hub-api:${{ needs.build.outputs.image-tag }}
-
+      - uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          images:   ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ needs.build.outputs.image-tag }}
