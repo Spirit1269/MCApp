@@ -13,6 +13,8 @@ env:
   API_DIRECTORY: src/api
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
   AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+  PNPM_RETRY_COUNT: 5
+  PNPM_RETRY_INTERVAL: 30
 
 
 #####################################################################
@@ -27,35 +29,29 @@ jobs:
     # ────────── checkout ──────────
     - uses: actions/checkout@v3
 
-    # ────────── Node + pnpm, build Next.js static site ──────────
+        # ────────── Node + pnpm ──────────
     - uses: pnpm/action-setup@v2
-      with: { version: 10.11.1, run_install: false }
-
-    - uses: actions/setup-node@v3
       with:
-        node-version: 18
-        cache: pnpm
-        cache-dependency-path: pnpm-lock.yaml
+        version: 10.11.1
+        run_install: false
 
-    - name: Install JS deps
-      run: pnpm install --frozen-lockfile
-      
-    - name: Install Dependencies
-      run: |
-        pnpm install --retry 5 --retry-factor 2 --retry-maxtime 120
-    
-    - name: Cache pnpm dependencies
+    - name: Cache pnpm store
       uses: actions/cache@v3
       with:
         path: ~/.pnpm-store
-        key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-
+        key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-    - name: Setup Alternate NPM Registry
+    - name: Force npm registry & install JS deps
       run: |
-        echo "registry=https://npm.pkg.github.com/" > ~/.npmrc
-        pnpm install
+        # make sure we hit the public registry
+        echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+
+        # low concurrency + retries to survive transient 503s
+        pnpm install \
+          --frozen-lockfile \
+          --network-concurrency=1 \
+          --retry=5
+
 
     - name: Build Next.js (static export)
       run: pnpm next build    # `output: "export"` is in next.config.js
