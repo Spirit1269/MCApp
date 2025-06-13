@@ -95,11 +95,13 @@ jobs:
           az acr login --name motorcycleclubhubacr
 
       # ────────── Build & push container ──────────
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
       - name: Build and Push Docker Image
-        run:
-          docker-compose build --no-cache |
-          docker buildx build --tag motorcycleclubhubacr.azurecr.io/mcapp:62bfb5725144887f4cb0ca56644ec98ee6abe284 .
-          docker push motorcycleclubhubacr.azurecr.io/mcapp:62bfb5725144887f4cb0ca56644ec98ee6abe284
+        run: |
+          docker buildx build --no-cache --push --tag motorcycleclubhubacr.azurecr.io/mcapp:62bfb5725144887f4cb0ca56644ec98ee6abe284 .
 
 ###############################################################################
 # 2. DEPLOY STATIC WEB APP
