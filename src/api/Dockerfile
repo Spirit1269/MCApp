@@ -12,9 +12,9 @@ RUN dotnet publish ./api.csproj -c Release -o /src/out
 FROM node:20 AS node-build
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN npm install --frozen-lockfile
 COPY . .
-RUN yarn build # or npm run build, depending on your project
+RUN npm run build
 
 # Final image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
