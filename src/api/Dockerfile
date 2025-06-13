@@ -24,6 +24,8 @@ WORKDIR /app
 COPY --from=dotnet-build /src/out ./
 
 # Copy built frontend assets (adapt these paths to your project)
+COPY --from=base /lib ./lib
+COPY --from=base /src/types ./types
 COPY --from=base /app/.next ./.next
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/globals.css ./globals.css
