@@ -1,52 +1,41 @@
 # syntax=docker/dockerfile:1
 
-ARG DOTNET_VERSION=8.0
+# Build .NET API
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-build
+WORKDIR /src
+COPY src/api/api.csproj ./
+RUN dotnet restore ./api.csproj
+COPY src/api/. ./
+RUN dotnet publish ./api.csproj -c Release -o /src/out
 
-FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
-WORKDIR /app
-
-# Copy csproj and restore as distinct layers for better caching
-COPY --link src/api/api.csproj ./
-RUN --mount=type=cache,target=/root/.nuget/packages \
-    --mount=type=cache,target=/root/.cache/msbuild \
-    dotnet restore
-
-# Copy the rest of the source code
-COPY --link . .
-
-# Publish the application
-RUN dotnet publish src/api/api.csproj -c Release -o /app/out
-
-# Runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}
-WORKDIR /app
-
-# Base stage
-FROM node:20 as base
+# Build Node/Next.js frontend
+FROM node:20 AS node-build
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 COPY . .
-RUN yarn build  # Ensure this step generates the required files
+RUN yarn build # or npm run build, depending on your project
 
-# Final stage
-FROM node:20 as final
+# Final image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
+
+# Copy published API
+COPY --from=dotnet-build /src/out ./
+
+# Copy built frontend assets (adapt these paths to your project)
 COPY --from=base /app/.next ./.next
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/globals.css ./globals.css
 COPY --from=base /app/layout.tsx ./layout.tsx
 COPY --from=base /app/page.tsx ./page.tsx
-COPY --from=base /app/next.config.js ./next.config.js
 
-# Create a non-root user
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-
-COPY --from=build /app/out .
+ENV NODE_ENV=production
 
 EXPOSE 80
 EXPOSE 443
 
-USER appuser
-
+# If your entrypoint is .NET API:
 ENTRYPOINT ["dotnet", "api.dll"]
+
+# If you need to run both .NET and Node servers, consider using a process manager or separate containers.
