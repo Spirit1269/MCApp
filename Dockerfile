@@ -6,11 +6,12 @@ WORKDIR /app
 
 # Install dependencies only, leveraging cache and bind mounts for speed and determinism
 COPY --link package.json package-lock.json ./
+COPY --link src/api/api.csproj ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --ignore-scripts
 
 # Copy the rest of the application source code
-COPY --link src/api/api.csproj ./
+COPY --link .. .
 
 # Build the Next.js app (TypeScript compilation, static export)
 RUN --mount=type=cache,target=/root/.npm \
