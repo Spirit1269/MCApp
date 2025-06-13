@@ -2,7 +2,7 @@
 
 FROM node:20 AS build
 WORKDIR /app
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json ./
 RUN npm install --frozen-lockfile
 COPY . .
 RUN npm run build
