@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 COPY --link . .
 
 # Publish the application
-RUN dotnet publish -c Release -o /app/out
+RUN dotnet publish src/api/api.csproj -c Release -o /app/out
 
 # Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS final
