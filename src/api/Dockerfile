@@ -6,7 +6,7 @@ FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers for better caching
-COPY --link api.csproj ./
+COPY --link src/api/api.csproj ./
 RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=cache,target=/root/.cache/msbuild \
     dotnet restore
