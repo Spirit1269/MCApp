@@ -96,7 +96,8 @@ jobs:
 
       # ────────── Build & push container ──────────
       - name: Build and Push Docker Image
-        run: |
+        run:
+          docker-compose build --no-cache |
           docker buildx build --tag motorcycleclubhubacr.azurecr.io/mcapp:62bfb5725144887f4cb0ca56644ec98ee6abe284 .
           docker push motorcycleclubhubacr.azurecr.io/mcapp:62bfb5725144887f4cb0ca56644ec98ee6abe284
 
