@@ -39,3 +39,7 @@ next-env.d.ts
 
 obj/
 bin/
+src/api/bin/
+src/api/obj/
+src/api/obj/Debug/net8.0/api.AssemblyInfo.cs
+src/api/obj/Debug/net8.0/api.AssemblyInfoInputs.cache
