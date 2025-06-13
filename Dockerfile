@@ -1,49 +1,41 @@
 # syntax=docker/dockerfile:1
 
-ARG NODE_VERSION=22.13.1
-FROM node:${NODE_VERSION}-slim AS base
+# Build .NET API
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-build
+WORKDIR /src
+COPY src/api/api.csproj ./
+RUN dotnet restore ./api.csproj
+COPY src/api/. ./
+RUN dotnet publish ./api.csproj -c Release -o /src/out
+
+# Build Node/Next.js frontend
+FROM node:20 AS node-build
+WORKDIR /app
+COPY package.json yarn.lock ./
+RUN npm install --frozen-lockfile
+COPY . .
+RUN npm run build
+
+# Final image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Install dependencies only, leveraging cache and bind mounts for speed and determinism
-COPY --link package.json package-lock.json ./
-COPY --link src/api/api.csproj ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --ignore-scripts
+# Copy published API
+COPY --from=dotnet-build /src/out ./
 
-# Copy the rest of the application source code
-COPY --link .. .
-
-# Build the Next.js app (TypeScript compilation, static export)
-RUN --mount=type=cache,target=/root/.npm \
-    npm run build
-
-# Remove dev dependencies for production
-RUN npm prune --production
-
-# --- Production image ---
-FROM node:${NODE_VERSION}-slim AS final
-WORKDIR /app
-
-# Create a non-root user
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-
-# Copy only the necessary files from the build stage
+# Copy built frontend assets (adapt these paths to your project)
+COPY --from=base /lib ./lib
+COPY --from=base /src/types ./types
 COPY --from=base /app/.next ./.next
-COPY --from=base /app/public ./public
-COPY --from=base /app/package.json ./
 COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/next.config.js ./
-COPY --from=base /app/app ./app
-COPY --from=base /app/components ./components
-COPY --from=base /app/hooks ./hooks
-COPY --from=base /app/lib ./lib
-COPY --from=base /app/types ./types
 COPY --from=base /app/globals.css ./globals.css
+COPY --from=base /app/layout.tsx ./layout.tsx
+COPY --from=base /app/page.tsx ./page.tsx
 
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-USER appuser
+EXPOSE 80
+EXPOSE 443
 
-EXPOSE 3000
-CMD ["npx", "next", "start"]
+# If your entrypoint is .NET API:
+ENTRYPOINT ["dotnet", "api.dll"]
