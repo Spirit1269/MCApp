@@ -21,7 +21,8 @@ jobs:
       image-tag: ${{ steps.meta.outputs.tag }}
     steps:
       # ─────────────────── checkout ───────────────────
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
       # ────────── Node + pnpm ──────────
       - uses: pnpm/action-setup@v2
@@ -89,23 +90,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Login to ACR
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.AZURE_ACR_NAME }}.azurecr.io
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name motorcycleclubhubacr
 
       # ────────── Build & push container ──────────
-      - name: Build and push image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ${{ env.API_DIRECTORY }}/Dockerfile
-          push: true
-          tags: |
-            ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ steps.meta.outputs.tag }}
-            ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:latest
+      - name: Build and Push Docker Image
+        run: |
+          docker buildx build --tag motorcycleclubhubacr.azurecr.io/mcapp:62bfb5725144887f4cb0ca56644ec98ee6abe284 .
+          docker push motorcycleclubhubacr.azurecr.io/mcapp:62bfb5725144887f4cb0ca56644ec98ee6abe284
 
 ###############################################################################
 # 2. DEPLOY STATIC WEB APP
