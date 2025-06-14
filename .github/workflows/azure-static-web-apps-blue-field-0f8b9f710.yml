@@ -85,6 +85,9 @@ jobs:
         run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
       # ────────── Azure login & ACR login ──────────
+      - name: Docker Logout
+        run: docker logout motorcycleclubhubacr.azurecr.io || true
+        
       - name: Login to Azure
         uses: azure/login@v1
         with:
