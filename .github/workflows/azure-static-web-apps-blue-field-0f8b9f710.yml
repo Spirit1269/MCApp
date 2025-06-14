@@ -101,10 +101,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose
       - name: Build Docker image
-        run: docker build -t motorcycleclubhubacr.azurecr.io/mcapp:test .
+        run: docker build -t motorcycleclubhubacr.azurecr.io/mcapp:${{ github.sha }} .
 
       - name: Push Docker image
-        run: docker push motorcycleclubhubacr.azurecr.io/mcapp:test
+        run: docker push motorcycleclubhubacr.azurecr.io/mcapp:${{ github.sha }}
 ###############################################################################
 # 2. DEPLOY STATIC WEB APP
 ###############################################################################
@@ -127,6 +127,7 @@ jobs:
           action: upload
           app_location: out
           api_location: ""             # no SWA serverless API
+    
 
 ###############################################################################
 # 3. DEPLOY API CONTAINER
@@ -144,4 +145,4 @@ jobs:
       - uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          images:   ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.AZURE_WEBAPP_NAME }}:${{ needs.build.outputs.image-tag }}
+          images: motorcycleclubhubacr.azurecr.io/mcapp:${{ needs.build.outputs.image-tag }}
