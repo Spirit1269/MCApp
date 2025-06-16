@@ -94,7 +94,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Azure Container Registry Login
-        run: az acr login --name motorcycleclubhubacr
+        run: docker login motorcycleclubhubacr.azurecr.io -u motorcycleclubhubacr -p ${{secrets.AZURE_PASSWORD}}
       # ────────── Build & push container ──────────
       - name: Install Docker Compose
         run: |
