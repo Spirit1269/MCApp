@@ -11,6 +11,6 @@ RUN dotnet publish ./api.csproj -c Release -o /src/out
 # Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=build /app ./
+COPY --from=dotnet-build /src/out .
 EXPOSE 80
 ENTRYPOINT ["dotnet", "api.dll"]
