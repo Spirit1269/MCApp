@@ -43,3 +43,7 @@ src/api/bin/
 src/api/obj/
 src/api/obj/Debug/net8.0/api.AssemblyInfo.cs
 src/api/obj/Debug/net8.0/api.AssemblyInfoInputs.cache
+src/api/bin/Debug/net8.0/api.dll
+src/api/bin/Debug/net8.0/api.exe
+.env.local
+src/api/appsettings.json
