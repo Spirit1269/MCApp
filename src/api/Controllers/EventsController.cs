@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Data;
 using System;
 using System.Collections.Generic;
@@ -16,18 +17,27 @@ namespace MotorcycleClubHub.Api.Controllers
     public class EventsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IClubContextService _clubContext;
 
-        public EventsController(ApplicationDbContext context)
+        private readonly IEventPermissionService _permissionService;
+
+        public EventsController(
+            ApplicationDbContext context,
+            IClubContextService clubContext,
+            IEventPermissionService permissionService)
         {
             _context = context;
+            _clubContext = clubContext;
+            _permissionService = permissionService;
         }
+
 
         // GET: api/events
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Event>>> GetEvents()
         {
             // Get user's email from the token
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userEmail = _clubContext.Email;
             if (string.IsNullOrEmpty(userEmail))
                 return Forbid();
 
@@ -56,7 +66,7 @@ namespace MotorcycleClubHub.Api.Controllers
             var events = await _context.Events
                 .Where(e => 
                     // Club events
-                    (e.ScopeType == "club" && e.ScopeId == district.ClubId) ||
+                    (e.ScopeType == "club" && e.ScopeId == _clubContext.ClubId) ||
                     // District events
                     (e.ScopeType == "district" && e.ScopeId == district.Id) ||
                     // Chapter events
@@ -77,7 +87,7 @@ namespace MotorcycleClubHub.Api.Controllers
                 return NotFound();
 
             // Get user's email from the token
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userEmail = _clubContext.Email;
             var member = await _context.Members
                 .FirstOrDefaultAsync(m => m.Email == userEmail);
 
@@ -117,8 +127,10 @@ namespace MotorcycleClubHub.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Event>> CreateEvent(Event @event)
         {
-            // Get user's email from the token
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userEmail = _clubContext.Email;
+            if (string.IsNullOrEmpty(userEmail))
+                return Forbid();
+
             var member = await _context.Members
                 .Include(m => m.Roles)
                 .FirstOrDefaultAsync(m => m.Email == userEmail);
@@ -126,44 +138,15 @@ namespace MotorcycleClubHub.Api.Controllers
             if (member == null)
                 return Forbid();
 
-            // Check if user has permission to create an event for this scope
-            var hasPermission = false;
-            
-            if (@event.ScopeType == "club")
-            {
-                // Only club officers can create club events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "club" && 
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer" ||
-                     r.RoleName == "Board Member"));
-            }
-            else if (@event.ScopeType == "district")
-            {
-                // Only district officers can create district events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "district" && 
-                    r.ScopeId == @event.ScopeId &&
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer"));
-            }
-            else if (@event.ScopeType == "chapter")
-            {
-                // Only chapter officers can create chapter events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "chapter" && 
-                    r.ScopeId == @event.ScopeId &&
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer" ||
-                     r.RoleName == "Road Captain"));
-            }
+            // ✅ Check permissions for all scope types
+            var hasPermission = await _permissionService
+                .CanCreateEventAsync(member, @event.ScopeType, @event.ScopeId);
 
             if (!hasPermission)
                 return Forbid();
 
-            // Set the creator
             @event.CreatedBy = member.Id;
-            
+
             _context.Events.Add(@event);
             await _context.SaveChangesAsync();
 
@@ -178,7 +161,9 @@ namespace MotorcycleClubHub.Api.Controllers
                 return BadRequest();
 
             // Get user's email from the token
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userEmail = _clubContext.Email;
+            if (string.IsNullOrEmpty(userEmail))
+                return Forbid();
             var member = await _context.Members
                 .Include(m => m.Roles)
                 .FirstOrDefaultAsync(m => m.Email == userEmail);
@@ -192,42 +177,12 @@ namespace MotorcycleClubHub.Api.Controllers
                 return NotFound();
 
             // Check if user has permission to update this event
-            var hasPermission = false;
-            
-            // Check if user created the event
-            if (existingEvent.CreatedBy == member.Id)
+            var hasPermission = await _permissionService.CanUpdateOrDeleteEventAsync(member, existingEvent);
+            if (@event.ScopeType != existingEvent.ScopeType || @event.ScopeId != existingEvent.ScopeId)
             {
-                hasPermission = true;
+                // If the scope has changed, check permissions for the new scope
+                hasPermission = await _permissionService.CanCreateEventAsync(member, @event.ScopeType, @event.ScopeId);
             }
-            else if (existingEvent.ScopeType == "club")
-            {
-                // Only club officers can update club events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "club" && 
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer" ||
-                     r.RoleName == "Board Member"));
-            }
-            else if (existingEvent.ScopeType == "district")
-            {
-                // Only district officers can update district events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "district" && 
-                    r.ScopeId == existingEvent.ScopeId &&
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer"));
-            }
-            else if (existingEvent.ScopeType == "chapter")
-            {
-                // Only chapter officers can update chapter events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "chapter" && 
-                    r.ScopeId == existingEvent.ScopeId &&
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer" ||
-                     r.RoleName == "Road Captain"));
-            }
-
             if (!hasPermission)
                 return Forbid();
 
@@ -253,15 +208,17 @@ namespace MotorcycleClubHub.Api.Controllers
         }
 
         // DELETE: api/events/{id}
-        [HttpDelete("{id}")]
+                [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(string id)
         {
             var @event = await _context.Events.FindAsync(id);
             if (@event == null)
                 return NotFound();
 
-            // Get user's email from the token
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userEmail = _clubContext.Email;
+            if (string.IsNullOrEmpty(userEmail))
+                return Forbid();
+
             var member = await _context.Members
                 .Include(m => m.Roles)
                 .FirstOrDefaultAsync(m => m.Email == userEmail);
@@ -269,42 +226,8 @@ namespace MotorcycleClubHub.Api.Controllers
             if (member == null)
                 return Forbid();
 
-            // Check if user has permission to delete this event
-            var hasPermission = false;
-            
-            // Check if user created the event
-            if (@event.CreatedBy == member.Id)
-            {
-                hasPermission = true;
-            }
-            else if (@event.ScopeType == "club")
-            {
-                // Only club officers can delete club events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "club" && 
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer" ||
-                     r.RoleName == "Board Member"));
-            }
-            else if (@event.ScopeType == "district")
-            {
-                // Only district officers can delete district events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "district" && 
-                    r.ScopeId == @event.ScopeId &&
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer"));
-            }
-            else if (@event.ScopeType == "chapter")
-            {
-                // Only chapter officers can delete chapter events
-                hasPermission = member.Roles.Any(r => 
-                    r.ScopeType == "chapter" && 
-                    r.ScopeId == @event.ScopeId &&
-                    (r.RoleName == "President" || r.RoleName == "Vice President" || 
-                     r.RoleName == "Secretary" || r.RoleName == "Treasurer" ||
-                     r.RoleName == "Road Captain"));
-            }
+            // ✅ Fix: reference the correct event
+            var hasPermission = await _permissionService.CanUpdateOrDeleteEventAsync(member, @event);
 
             if (!hasPermission)
                 return Forbid();
