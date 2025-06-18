@@ -40,7 +40,7 @@ namespace api.Migrations
 
                     b.HasIndex("DistrictId");
 
-                    b.ToTable("Chapters", (string)null);
+                    b.ToTable("Chapters");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Club", b =>
@@ -48,9 +48,18 @@ namespace api.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSetup")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("MonthlyDuesCents")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -65,9 +74,12 @@ namespace api.Migrations
                         .HasMaxLength(7)
                         .HasColumnType("nvarchar(7)");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Clubs", (string)null);
+                    b.ToTable("Clubs");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.District", b =>
@@ -88,7 +100,7 @@ namespace api.Migrations
 
                     b.HasIndex("ClubId");
 
-                    b.ToTable("Districts", (string)null);
+                    b.ToTable("Districts");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.DuesInvoice", b =>
@@ -121,7 +133,7 @@ namespace api.Migrations
 
                     b.HasIndex("ChapterId");
 
-                    b.ToTable("DuesInvoices", (string)null);
+                    b.ToTable("DuesInvoices");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Event", b =>
@@ -165,7 +177,7 @@ namespace api.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Member", b =>
@@ -181,6 +193,10 @@ namespace api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ClubId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -191,6 +207,13 @@ namespace api.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("StripeCustomerId")
                         .HasColumnType("nvarchar(max)");
 
@@ -198,7 +221,7 @@ namespace api.Migrations
 
                     b.HasIndex("ChapterId");
 
-                    b.ToTable("Members", (string)null);
+                    b.ToTable("Members");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Payment", b =>
@@ -220,7 +243,7 @@ namespace api.Migrations
 
                     b.HasIndex("DuesInvoiceId");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Post", b =>
@@ -259,7 +282,7 @@ namespace api.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("Posts", (string)null);
+                    b.ToTable("Posts");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.RideRoute", b =>
@@ -293,7 +316,7 @@ namespace api.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("RideRoutes", (string)null);
+                    b.ToTable("RideRoutes");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Role", b =>
@@ -323,7 +346,7 @@ namespace api.Migrations
 
                     b.HasIndex("MemberId");
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("MotorcycleClubHub.Data.Chapter", b =>

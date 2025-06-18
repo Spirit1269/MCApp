@@ -48,6 +48,6 @@ src/api/bin/Debug/net8.0/api.exe
 .env.local
 src/api/appsettings.json
 src/api/bin/Debug/net8.0/api.deps.json
-src/api/bin/Debug/net8.0/api.deps.json
-src/api/bin/Debug/net8.0/api.deps.json
 src/api/bin/Debug/net8.0/api.exe
+appsettings.json
+src/api/bin/Debug/net8.0/appsettings.json
