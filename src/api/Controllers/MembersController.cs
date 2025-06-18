@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Data;
 using System;
 using System.Collections.Generic;
@@ -13,13 +14,15 @@ namespace MotorcycleClubHub.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class MembersController : ControllerBase
+    public class MembersController : BaseController
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMemberService _memberService;
 
-        public MembersController(ApplicationDbContext context)
+        public MembersController(ApplicationDbContext context, IMemberService memberService)
         {
             _context = context;
+            _memberService = memberService;
         }
 
         // GET: api/members
@@ -40,25 +43,25 @@ namespace MotorcycleClubHub.Api.Controllers
                 return NotFound("Member profile not found");
 
             // Check if user has any admin roles
-            var isAdmin = member.Roles.Any(r => 
-                r.RoleName == "President" || 
-                r.RoleName == "Vice President" || 
-                r.RoleName == "Secretary" || 
+            var isAdmin = member.Roles.Any(r =>
+                r.RoleName == "President" ||
+                r.RoleName == "Vice President" ||
+                r.RoleName == "Secretary" ||
                 r.RoleName == "Treasurer" ||
                 r.RoleName == "Board Member");
 
             if (isAdmin)
             {
                 // Admins can see all members based on their scope
-                var adminRoles = member.Roles.Where(r => 
-                    r.RoleName == "President" || 
-                    r.RoleName == "Vice President" || 
-                    r.RoleName == "Secretary" || 
+                var adminRoles = member.Roles.Where(r =>
+                    r.RoleName == "President" ||
+                    r.RoleName == "Vice President" ||
+                    r.RoleName == "Secretary" ||
                     r.RoleName == "Treasurer" ||
                     r.RoleName == "Board Member");
-                
+
                 var members = new List<Member>();
-                
+
                 foreach (var role in adminRoles)
                 {
                     if (role.ScopeType == "club")
@@ -73,11 +76,11 @@ namespace MotorcycleClubHub.Api.Controllers
                             .Where(c => c.DistrictId == role.ScopeId)
                             .Select(c => c.Id)
                             .ToListAsync();
-                        
+
                         var districtMembers = await _context.Members
                             .Where(m => chapters.Contains(m.ChapterId))
                             .ToListAsync();
-                        
+
                         members.AddRange(districtMembers);
                     }
                     else if (role.ScopeType == "chapter")
@@ -86,11 +89,11 @@ namespace MotorcycleClubHub.Api.Controllers
                         var chapterMembers = await _context.Members
                             .Where(m => m.ChapterId == role.ScopeId)
                             .ToListAsync();
-                        
+
                         members.AddRange(chapterMembers);
                     }
                 }
-                
+
                 return members.Distinct().ToList();
             }
             else
@@ -102,12 +105,35 @@ namespace MotorcycleClubHub.Api.Controllers
             }
         }
 
+       [HttpGet("my-members")]
+        public async Task<IActionResult> GetMyMembers()
+        {
+            var member = await _memberService.GetCurrentMemberAsync();
+            if (member == null) return Forbid();
+
+            var clubId = await _memberService.GetClubIdForMemberAsync(member);
+            if (string.IsNullOrEmpty(clubId)) return NotFound("Unable to resolve club");
+
+            var memberChapterIds = await _context.Chapters
+                .Where(c => _context.Districts
+                    .Any(d => d.Id == c.DistrictId && d.ClubId == clubId))
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            var members = await _context.Members
+                .Where(m => memberChapterIds.Contains(m.ChapterId))
+                .ToListAsync();
+
+            return Ok(members);
+        }
+
+
         // GET: api/members/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<Member>> GetMember(string id)
         {
             var member = await _context.Members.FindAsync(id);
-            
+
             if (member == null)
                 return NotFound();
 
@@ -126,18 +152,18 @@ namespace MotorcycleClubHub.Api.Controllers
 
             // Check if user has admin rights to view this member
             var isAdmin = false;
-            
+
             foreach (var role in currentMember.Roles)
             {
-                if (role.ScopeType == "club" && 
-                    (role.RoleName == "President" || role.RoleName == "Vice President" || 
+                if (role.ScopeType == "club" &&
+                    (role.RoleName == "President" || role.RoleName == "Vice President" ||
                      role.RoleName == "Secretary" || role.RoleName == "Treasurer" || role.RoleName == "Board Member"))
                 {
                     isAdmin = true;
                     break;
                 }
-                else if (role.ScopeType == "district" && 
-                         (role.RoleName == "President" || role.RoleName == "Vice President" || 
+                else if (role.ScopeType == "district" &&
+                         (role.RoleName == "President" || role.RoleName == "Vice President" ||
                           role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to a chapter in this district
@@ -148,8 +174,8 @@ namespace MotorcycleClubHub.Api.Controllers
                         break;
                     }
                 }
-                else if (role.ScopeType == "chapter" && 
-                         (role.RoleName == "President" || role.RoleName == "Vice President" || 
+                else if (role.ScopeType == "chapter" &&
+                         (role.RoleName == "President" || role.RoleName == "Vice President" ||
                           role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to this chapter
@@ -197,11 +223,11 @@ namespace MotorcycleClubHub.Api.Controllers
 
                 dbMember.DisplayName = member.DisplayName;
                 dbMember.AvatarUrl = member.AvatarUrl;
-                
+
                 // Don't allow changing chapter or other critical fields
-                
+
                 _context.Entry(dbMember).State = EntityState.Modified;
-                
+
                 try
                 {
                     await _context.SaveChangesAsync();
@@ -213,31 +239,31 @@ namespace MotorcycleClubHub.Api.Controllers
                     else
                         throw;
                 }
-                
+
                 return NoContent();
             }
 
             // Check if user has admin rights to update this member
             var isAdmin = false;
-            
+
             foreach (var role in currentMember.Roles)
             {
-                if (role.ScopeType == "club" && 
-                    (role.RoleName == "President" || role.RoleName == "Vice President" || 
+                if (role.ScopeType == "club" &&
+                    (role.RoleName == "President" || role.RoleName == "Vice President" ||
                      role.RoleName == "Secretary" || role.RoleName == "Treasurer" || role.RoleName == "Board Member"))
                 {
                     isAdmin = true;
                     break;
                 }
-                else if (role.ScopeType == "district" && 
-                         (role.RoleName == "President" || role.RoleName == "Vice President" || 
+                else if (role.ScopeType == "district" &&
+                         (role.RoleName == "President" || role.RoleName == "Vice President" ||
                           role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to a chapter in this district
                     var dbMember = await _context.Members.FindAsync(id);
                     if (dbMember == null)
                         return NotFound();
-                        
+
                     var chapter = await _context.Chapters.FindAsync(dbMember.ChapterId);
                     if (chapter != null && chapter.DistrictId == role.ScopeId)
                     {
@@ -245,8 +271,8 @@ namespace MotorcycleClubHub.Api.Controllers
                         break;
                     }
                 }
-                else if (role.ScopeType == "chapter" && 
-                         (role.RoleName == "President" || role.RoleName == "Vice President" || 
+                else if (role.ScopeType == "chapter" &&
+                         (role.RoleName == "President" || role.RoleName == "Vice President" ||
                           role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to this chapter
@@ -309,5 +335,6 @@ namespace MotorcycleClubHub.Api.Controllers
         {
             return _context.Members.Any(e => e.Id == id);
         }
+        
     }
 }

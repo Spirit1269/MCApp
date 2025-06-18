@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using MotorcycleClubHub.Api.Interfaces;
+using MotorcycleClubHub.Api.Middleware;
+using MotorcycleClubHub.Api.Services;
 using MotorcycleClubHub.Data;
+using Microsoft.AspNetCore.Authentication.Google;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +19,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(opts =>
         ?? Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
         ?? throw new InvalidOperationException("No DB connection string configured")));
 
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultScheme = "Cookies";
+        options.DefaultChallengeScheme = "Google";
+    })
+    .AddCookie("Cookies")
+    .AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    });
+
 builder.Services.AddControllers();
+builder.Services.AddScoped<IEventPermissionService, EventPermissionService>();
+builder.Services.AddScoped<IMemberService, MemberService>();
 
 var app = builder.Build();
 
@@ -26,6 +46,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseMiddleware<ClubIdEnforcementMiddleware>();
+app.UseAuthorization();
 
 app.MapControllers();
 

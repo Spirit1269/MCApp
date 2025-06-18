@@ -8,8 +8,13 @@ namespace MotorcycleClubHub.Data
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Name { get; set; } = string.Empty;
         public string? LogoUrl { get; set; }
-        public string? PrimaryHex { get; set; } 
+        public string? PrimaryHex { get; set; }
         public string? SecondaryHex { get; set; }
+        public bool IsSetup { get; set; } = false;
+        public int MonthlyDuesCents { get; set; } = 0;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; } = null;
+
     }
 
     public class District
@@ -29,13 +34,15 @@ namespace MotorcycleClubHub.Data
     public class Member
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string ClubId { get; set; } = string.Empty;
         public string ChapterId { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string? AvatarUrl { get; set; }
         public string? StripeCustomerId { get; set; }
-        // Member (add at bottom)
         public ICollection<Role> Roles { get; set; } = new List<Role>();
+        public string PasswordHash { get; set; } = string.Empty;
+        public bool IsApproved { get; set; } = false; // officer verifies this
 
     }
 
