@@ -1,4 +1,4 @@
-# MCApp - Motorcycle Club App
+Motorcycle Club Hub
 
 MCApp is a full stack web application that combines a Next.js/TypeScript frontend with an ASP.NET Core API backend. The project is organized into separate directories for the frontend UI, backend services, and infrastructure.
 
