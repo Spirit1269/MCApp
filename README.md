@@ -50,8 +50,8 @@ This will build and start both services:
 - `dotnet-api` (.NET backend) on port 8080
 
 ### Environment variables
-- No required environment variables are specified by default in the Dockerfiles or compose file.
-- If you need to set environment variables, uncomment the `env_file` lines in `docker-compose.yml` and provide the appropriate `.env` files.
+- The API expects a `DATABASE_CONNECTION_STRING` value so Entity Framework can connect to the SQL Server database.
+- If you need to set environment variables, uncomment the `env_file` lines in `compose.yaml` and provide the appropriate `.env` files.
 
 ### Special configuration
 - Both services run as non-root users inside their containers for improved security.
