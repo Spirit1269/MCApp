@@ -66,4 +66,12 @@ This will build and start both services:
 4. **Check the deployment pipeline** – study the GitHub Actions workflow and `infra/` Bicep template if you plan to deploy to Azure or modify infrastructure.
 5. **Learn more** – if unfamiliar with Next.js, EF Core, or Docker Compose, these technologies are central to development and deployment.
 
+## Running tests
+
+Execute the unit tests with:
+
+```sh
+npm test
+```
+
 ---
