@@ -35,6 +35,7 @@ builder.Services
 builder.Services.AddControllers();
 builder.Services.AddScoped<IEventPermissionService, EventPermissionService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
