@@ -117,14 +117,25 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
       - name: Install dependencies
         run: pnpm install
       - name: Build static site
         run: pnpm build
 
       - name: Upload static frontend
-        uses: actions/download-artifact@v4
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: out/
+
+
+      - uses: actions/download-artifact@v4
         with:
           name: nextjs-build
           path: out/
