@@ -47,3 +47,7 @@ next-env.d.ts
 src/api/appsettings.json
 .vs/
 *.user
+src/api/bin
+/bin
+bin/
+
