@@ -128,6 +128,13 @@ jobs:
       - name: Build static site
         run: pnpm build
 
+      - name: Check out directory exists
+        run: |
+          if [ ! -d "out" ]; then
+            echo "Build output directory 'out/' not found!"
+            exit 1
+          fi
+
       - name: Upload static frontend
         uses: actions/upload-artifact@v4
         with:
