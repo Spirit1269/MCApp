@@ -1,9 +1,14 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Api.Middleware;
 using MotorcycleClubHub.Api.Services;
 using MotorcycleClubHub.Data;
 using Microsoft.AspNetCore.Authentication.Google;
+using dotenv.net;
+
+
+DotEnv.Load();
 
 
 var builder = WebApplication.CreateBuilder(args);
