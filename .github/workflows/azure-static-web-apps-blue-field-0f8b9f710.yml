@@ -9,6 +9,8 @@ env:
   AZURE_ACR_NAME: motorcycleclubhubacr
   AZURE_WEBAPP_NAME: mcapp
   API_DIRECTORY: src/api
+  STATIC_WEBAPP_NAME: blue-field-0f8b9f710    # your Static Web App
+  API_WEBAPP_NAME: mcapp-api                    # your .NET API App Service
   DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
 
 ###############################################################################
@@ -169,7 +171,8 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - uses: azure/webapps-deploy@v2
+      - name: Deploy container to mcapp-api
+        uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          images: motorcycleclubhubacr.azurecr.io/mcapp:${{ needs.build.outputs.image-tag }}
+          app-name: ${{ env.API_WEBAPP_NAME }}
+          images: ${{ env.AZURE_ACR_NAME }}.azurecr.io/mcapp:${{ needs.build.outputs.image-tag }}
