@@ -29,7 +29,7 @@ namespace MotorcycleClubHub.Api.Services
             {
                 "club" => roles.Any(r =>
                     r.ScopeType == "club" &&
-                    new[] { "President", "Vice President", "Secretary", "Treasurer", "Road Captain", "Seargeant At Arms","Board Member" }.Contains(r.RoleName)),
+                    new[] { "President", "Vice President", "Secretary", "Treasurer", "Road Captain", "Sergeant At Arms","Board Member" }.Contains(r.RoleName)),
 
                 "district" => roles.Any(r =>
                     r.ScopeType == "district" && r.ScopeId == scopeId &&
@@ -37,7 +37,7 @@ namespace MotorcycleClubHub.Api.Services
 
                 "chapter" => roles.Any(r =>
                     r.ScopeType == "chapter" && r.ScopeId == scopeId &&
-                    new[] { "President", "Vice President", "Secretary", "Treasurer", "Road Captain", "Seargeant At Arms" }.Contains(r.RoleName)),
+                    new[] { "President", "Vice President", "Secretary", "Treasurer", "Road Captain", "Sergeant At Arms" }.Contains(r.RoleName)),
 
                 _ => false
             };

@@ -36,4 +36,3 @@ namespace MotorcycleClubHub.Api.Services
         }
     }
 }
-//                 return NotFound("District not found");
