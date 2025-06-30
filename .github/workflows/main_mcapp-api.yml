@@ -3,10 +3,6 @@
 
 name: Build and deploy ASP.Net Core app to Azure Web App - mcapp-api
 
-env:
-        DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
-        working-directory: ./src/api   # <-- adjust if your .csproj is elsewhere
-
 on:
   push:
     branches:
@@ -29,6 +25,8 @@ jobs:
 
       - name: Run EF Core Migrations
         working-directory: ./src/api
+        env:
+          DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
         run: |
           dotnet tool install -g dotnet-ef
           dotnet ef database update --connection "$DATABASE_CONNECTION_STRING"
