@@ -1,12 +1,15 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/toaster";
 import { MsalProvider } from "@/components/auth/msal-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = localFont({
+  src: "../public/fonts/Inter.ttf",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Motorcycle Club Hub",
