@@ -13,6 +13,21 @@ DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1) Register CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClubHub", policy =>
+    {
+        policy
+          .WithOrigins(
+            "https://blue-field-0f8b9f710.6.azurestaticapps.net",
+            "https://tripowersllc.com",
+            "https://www.tripowersllc.com" 
+          )
+          .AllowAnyHeader()
+          .AllowAnyMethod();
+    });
+});
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -43,6 +58,8 @@ builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+app.UseCors("AllowClubHub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
