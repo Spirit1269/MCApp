@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        {/* {<MsalProvider> */}
+         <MsalProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
@@ -32,7 +32,7 @@ export default function RootLayout({
             </div>
             <Toaster />
           </ThemeProvider>
-        {/* </MsalProvider>} */}
+        </MsalProvider>
       </body>
     </html>
   );
