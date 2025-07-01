@@ -1,35 +1,35 @@
-'use client';
+// app/components/ui/toaster.tsx
+"use client";
 
-import { useToast } from '@/hooks/use-toast';
+import * as React from "react";
+import { useToast } from "@/lib/toast-store";
 import {
   Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
   ToastTitle,
-  ToastViewport,
-} from '@/components/ui/toast';
+  ToastDescription,
+  ToastAction,
+  ToastActionElement,
+} from "@/components/ui/toast";
 
 export function Toaster() {
   const { toasts } = useToast();
-
   return (
-    <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
-        return (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-            </div>
-            {action}
-            <ToastClose />
-          </Toast>
-        );
-      })}
-      <ToastViewport />
-    </ToastProvider>
+    <div className="fixed top-5 right-5 flex flex-col space-y-2 z-50">
+      {toasts.map(t => (
+        <Toast key={t.id} open={t.open} onOpenChange={t.onOpenChange}>
+          {t.title && <ToastTitle>{t.title}</ToastTitle>}
+          {t.description && <ToastDescription>{t.description}</ToastDescription>}
+          {t.action && (
+            <ToastAction
+              asChild
+              altText="Execute toast action"            // 👈 add a meaningful description here
+            >
+              {t.action as ToastActionElement}
+            </ToastAction>
+          )}
+
+        </Toast>
+      ))}
+    </div>
   );
 }

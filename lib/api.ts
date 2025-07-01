@@ -17,11 +17,17 @@ export interface Member {
   id: string;
   firstName: string;
   lastName: string;
+  ridingName: string;
+  phoneNumber?: string; // optional, can be undefined
+  birthday?: string;   // optional, ISO date string
   email: string;
+  typeOfBike?: string; // optional, e.g. "Cruiser", "Sport", etc.
+  memberStatus: string; // e.g. "Active", "Inactive", "Prospect"
   role: string;          // e.g. "Chapter President", "Road Captain", etc.
   clubId: string;        // the ID of the club/chapter they belong to
   avatarUrl?: string;    // optional URL to their profile image
   joinedAt: string;      // ISO date string
+  
 }
 
 export interface Club {
@@ -34,11 +40,18 @@ export interface Club {
   primaryColor?: string; // HEX, e.g. "#FF0000"
   secondaryColor?: string;
   createdAt: string;     // ISO date string
+  isSetup: boolean;
+  monthlyDuesCents: number;
+  updatedAt?: string
+  hasClubhouse: boolean; // true if the club has a clubhouse
+  clubhouseAddress?: string; // address of the clubhouse if available
 }
 
 // lib/api.ts
 export interface Event {
   id: string;
+  scopeId: string
+  scopeType: string
   title: string;
   description: string;
   location: string;
@@ -48,6 +61,9 @@ export interface Event {
   attendees: number;
   type: string;
   image: string;
+  flyerUrl?: string
+  startsAt: string
+  endsAt: string
   organizer: {
     name: string;
     avatar: string;
