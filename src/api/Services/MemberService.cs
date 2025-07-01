@@ -34,5 +34,14 @@ namespace MotorcycleClubHub.Api.Services
             var district = await _context.Districts.FirstOrDefaultAsync(d => d.Id == chapter.DistrictId);
             return district?.ClubId;
         }
+
+        public async Task<IEnumerable<Member>> GetMembersByClubAsync(string clubId)
+{
+    return await _context.Members
+                 .Where(m => m.ClubId == clubId)
+                 .Include(m => m.Roles)
+                 .ToListAsync();
+}
+
     }
 }

@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Collections.Generic;   // for IEnumerable<T>
+using System.Linq;                  // for .Any(), .Where(), .Distinct()
+
 
 namespace MotorcycleClubHub.Api.Controllers
 {
@@ -29,21 +29,18 @@ namespace MotorcycleClubHub.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Member>>> GetMembers()
         {
-            // Get user's email from the token
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            // Use BaseController helper:
+            var userEmail = GetCurrentUserEmail();
             if (string.IsNullOrEmpty(userEmail))
                 return Forbid();
 
-            // Get the user's member record
-            var member = await _context.Members
-                .Include(m => m.Roles)
-                .FirstOrDefaultAsync(m => m.Email == userEmail);
-
-            if (member == null)
+            // Fetch the current member via your service
+            var currentMember = await _memberService.GetCurrentMemberAsync();
+            if (currentMember is null)
                 return NotFound("Member profile not found");
 
             // Check if user has any admin roles
-            var isAdmin = member.Roles.Any(r =>
+            var isAdmin = currentMember.Roles.Any(r =>
                 r.RoleName == "President" ||
                 r.RoleName == "Vice President" ||
                 r.RoleName == "Secretary" ||
@@ -53,14 +50,16 @@ namespace MotorcycleClubHub.Api.Controllers
             if (isAdmin)
             {
                 // Admins can see all members based on their scope
-                var adminRoles = member.Roles.Where(r =>
+                var adminRoles = currentMember.Roles.Where(r =>
                     r.RoleName == "President" ||
                     r.RoleName == "Vice President" ||
                     r.RoleName == "Secretary" ||
                     r.RoleName == "Treasurer" ||
                     r.RoleName == "Board Member");
 
-                var members = new List<Member>();
+                var members = await _context.Members
+                    .Where(m => m.ChapterId == currentMember.ChapterId)
+                    .ToListAsync();
 
                 foreach (var role in adminRoles)
                 {
@@ -100,7 +99,7 @@ namespace MotorcycleClubHub.Api.Controllers
             {
                 // Regular members can only see members in their chapter
                 return await _context.Members
-                    .Where(m => m.ChapterId == member.ChapterId)
+                    .Where(m => m.ChapterId == currentMember.ChapterId)
                     .ToListAsync();
             }
         }
@@ -108,10 +107,11 @@ namespace MotorcycleClubHub.Api.Controllers
        [HttpGet("my-members")]
         public async Task<IActionResult> GetMyMembers()
         {
-            var member = await _memberService.GetCurrentMemberAsync();
-            if (member == null) return Forbid();
+           var currentMember = await _memberService.GetCurrentMemberAsync();
+            if (currentMember is null)
+                return Forbid();
 
-            var clubId = await _memberService.GetClubIdForMemberAsync(member);
+            var clubId = GetCurrentClubId();
             if (string.IsNullOrEmpty(clubId)) return NotFound("Unable to resolve club");
 
             var memberChapterIds = await _context.Chapters
@@ -138,7 +138,7 @@ namespace MotorcycleClubHub.Api.Controllers
                 return NotFound();
 
             // Check if the user is requesting their own profile
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userEmail = GetCurrentUserEmail();
             var currentMember = await _context.Members
                 .Include(m => m.Roles)
                 .FirstOrDefaultAsync(m => m.Email == userEmail);
@@ -205,7 +205,7 @@ namespace MotorcycleClubHub.Api.Controllers
                 return BadRequest();
 
             // Check if the user is updating their own profile
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userEmail = GetCurrentUserEmail();
             var currentMember = await _context.Members
                 .Include(m => m.Roles)
                 .FirstOrDefaultAsync(m => m.Email == userEmail);

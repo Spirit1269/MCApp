@@ -7,5 +7,6 @@ namespace MotorcycleClubHub.Api.Interfaces
     {
         Task<Member?> GetCurrentMemberAsync();
         Task<string?> GetClubIdForMemberAsync(Member member);
+        Task<IEnumerable<Member>> GetMembersByClubAsync(string clubId);
     }
 }

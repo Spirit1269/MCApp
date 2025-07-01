@@ -33,6 +33,7 @@ builder.Services.AddCors(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<ApplicationDbContext>(opts =>
     opts.UseSqlServer(
         builder.Configuration.GetConnectionString("Default") // from appsettings OR AZURE
@@ -55,17 +56,23 @@ builder.Services
 builder.Services.AddControllers();
 builder.Services.AddScoped<IEventPermissionService, EventPermissionService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IClubContextService, ClubContextService>();
 builder.Services.AddControllers();
+
 
 var app = builder.Build();
 
 app.UseCors("AllowClubHub");
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger();                // Serves the generated JSON at /swagger/v1/swagger.json
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Club API V1");
+        c.RoutePrefix = "swagger";   // Hosts UI at /swagger
+    });
 }
 
 using (var scope = app.Services.CreateScope())
