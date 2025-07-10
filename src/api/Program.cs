@@ -34,12 +34,15 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddDbContext<ApplicationDbContext>(opts =>
-    opts.UseSqlServer(
-        builder.Configuration.GetConnectionString("Default") // from appsettings OR AZURE
-        ?? Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
-        ?? throw new InvalidOperationException("No DB connection string configured")));
+    
+var connStr =
+    builder.Configuration.GetConnectionString("Default")
+    ?? builder.Configuration["DATABASE_CONNECTION_STRING"]
+    ?? throw new InvalidOperationException("No DB connection string configured");
 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connStr));
+    
 builder.Services
     .AddAuthentication(options =>
     {
