@@ -119,10 +119,10 @@ jobs:
         with:
           version: 10
 
-      - name: Install dependencies
-        run: pnpm install
-      - name: Build static site
-        run: pnpm build
+      # - name: Install dependencies
+      #   run: pnpm install
+      # - name: Build static site
+      #   run: pnpm build
 
       - name: Check out directory exists
         run: |
