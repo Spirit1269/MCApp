@@ -226,7 +226,7 @@ export default function OfficerDashboard() {
                 <p>Status: {inv.status}</p>
               </CardContent>
               <CardFooter>
-                {inv.status !== "paid" && (
+                {inv.status !== "Paid" && (
                   <Button onClick={() => handlePay(inv.id)}>Mark as Paid</Button>
                 )}
               </CardFooter>

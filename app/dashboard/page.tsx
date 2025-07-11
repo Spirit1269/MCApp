@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchMembers, fetchEvents, fetchClubs, Event, Member, Club } from "@/lib/api";
+import { fetchClubMembers, fetchEvents, fetchClubs, Event, Member, Club } from "@/lib/api";
 
 export default function Dashboard() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -10,7 +10,7 @@ export default function Dashboard() {
   const [clubs, setClubs] = useState<Club[]>([]);
 
   useEffect(() => {
-    fetchMembers().then(setMembers);
+    fetchClubMembers("some-club-id").then(setMembers);
     fetchEvents().then(setEvents);
     fetchClubs().then(setClubs);
   }, []);
