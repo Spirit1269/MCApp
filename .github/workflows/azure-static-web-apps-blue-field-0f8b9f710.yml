@@ -42,7 +42,7 @@ jobs:
         run: |
           echo "registry=https://registry.npmjs.org/" > ~/.npmrc
           pnpm install \
-            --frozen-lockfile \
+            --no-frozen-lockfile \
             --network-concurrency=1 \
             --fetch-retries=5 \
             --fetch-retry-factor=2 \
