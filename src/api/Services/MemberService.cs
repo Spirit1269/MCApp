@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Data;
+using MotorcycleClubHub.Api.Data;
 using System.Threading.Tasks;
 
 namespace MotorcycleClubHub.Api.Services

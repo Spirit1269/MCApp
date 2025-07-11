@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using MotorcycleClubHub.Data;
+using MotorcycleClubHub.Api.Data;
 
 namespace MotorcycleClubHub.Data
 {

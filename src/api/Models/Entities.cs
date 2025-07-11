@@ -1,8 +1,16 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.VisualBasic;
 
 namespace MotorcycleClubHub.Data
 {
+
+    public enum DueDate
+    {
+        Monthly,
+        Quarterly,
+        Yearly
+    }
     public class Club
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -85,9 +93,18 @@ namespace MotorcycleClubHub.Data
     public class DuesInvoice
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string MemberId { get; set; } = string.Empty; // Reference to Member.Id
+        public string ClubId { get; set; } = string.Empty;
         public string ChapterId { get; set; } = string.Empty;
         public string Period { get; set; } = string.Empty; // e.g., '2023-Q1'
+        public DueDate Date { get; set; } = DueDate.Monthly; // Monthly, Quarterly, Yearly
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? DueAt { get; set; } = null; // Nullable for draft invoices
         public int AmountCents { get; set; }
+        public DateTime? PaidAt { get; set; } = null; // Nullable if not paid
+        public DateTime? CancelledAt { get; set; } = null; // Nullable
+        public DateTime? UpdatedAt { get; set; } = null; // Nullable for updates
+        public string? Notes { get; set; } // Optional notes for the invoice
         public string Status { get; set; } = "draft"; // 'draft', 'sent', 'paid', 'overdue', 'cancelled'
         public string? StripeInvoiceId { get; set; }
     }

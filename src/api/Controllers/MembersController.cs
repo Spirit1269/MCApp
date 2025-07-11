@@ -3,10 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Data;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using System.Collections.Generic;   // for IEnumerable<T>
-using System.Linq;                  // for .Any(), .Where(), .Distinct()
+using MotorcycleClubHub.Api.Data;
 
 
 namespace MotorcycleClubHub.Api.Controllers
@@ -45,6 +42,7 @@ namespace MotorcycleClubHub.Api.Controllers
                 r.RoleName == "Vice President" ||
                 r.RoleName == "Secretary" ||
                 r.RoleName == "Treasurer" ||
+                r.RoleName == "Sargeant at Arms" ||
                 r.RoleName == "Board Member");
 
             if (isAdmin)
@@ -55,6 +53,7 @@ namespace MotorcycleClubHub.Api.Controllers
                     r.RoleName == "Vice President" ||
                     r.RoleName == "Secretary" ||
                     r.RoleName == "Treasurer" ||
+                    r.RoleName == "Sargeant at Arms" ||
                     r.RoleName == "Board Member");
 
                 var members = await _context.Members
@@ -157,14 +156,14 @@ namespace MotorcycleClubHub.Api.Controllers
             {
                 if (role.ScopeType == "club" &&
                     (role.RoleName == "President" || role.RoleName == "Vice President" ||
-                     role.RoleName == "Secretary" || role.RoleName == "Treasurer" || role.RoleName == "Board Member"))
+                     role.RoleName == "Secretary" || role.RoleName == "Treasurer" || role.RoleName == "Sargeant at Arms" || role.RoleName == "Board Member"))
                 {
                     isAdmin = true;
                     break;
                 }
                 else if (role.ScopeType == "district" &&
                          (role.RoleName == "President" || role.RoleName == "Vice President" ||
-                          role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
+                          role.RoleName == "Secretary" || role.RoleName == "Sargeant at Arms" ||role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to a chapter in this district
                     var chapter = await _context.Chapters.FindAsync(member.ChapterId);
@@ -176,7 +175,7 @@ namespace MotorcycleClubHub.Api.Controllers
                 }
                 else if (role.ScopeType == "chapter" &&
                          (role.RoleName == "President" || role.RoleName == "Vice President" ||
-                          role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
+                          role.RoleName == "Secretary" || role.RoleName == "Sargeant at Arms" ||role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to this chapter
                     if (member.ChapterId == role.ScopeId)
@@ -250,14 +249,14 @@ namespace MotorcycleClubHub.Api.Controllers
             {
                 if (role.ScopeType == "club" &&
                     (role.RoleName == "President" || role.RoleName == "Vice President" ||
-                     role.RoleName == "Secretary" || role.RoleName == "Treasurer" || role.RoleName == "Board Member"))
+                     role.RoleName == "Secretary" || role.RoleName == "Sargeant at Arms" ||role.RoleName == "Treasurer" || role.RoleName == "Board Member"))
                 {
                     isAdmin = true;
                     break;
                 }
                 else if (role.ScopeType == "district" &&
                          (role.RoleName == "President" || role.RoleName == "Vice President" ||
-                          role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
+                          role.RoleName == "Secretary" || role.RoleName == "Sargeant at Arms" ||role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to a chapter in this district
                     var dbMember = await _context.Members.FindAsync(id);
@@ -273,7 +272,7 @@ namespace MotorcycleClubHub.Api.Controllers
                 }
                 else if (role.ScopeType == "chapter" &&
                          (role.RoleName == "President" || role.RoleName == "Vice President" ||
-                          role.RoleName == "Secretary" || role.RoleName == "Treasurer"))
+                          role.RoleName == "Secretary" || role.RoleName == "Sargeant at Arms" ||role.RoleName == "Treasurer"))
                 {
                     // Check if member belongs to this chapter
                     var dbMember = await _context.Members.FindAsync(id);

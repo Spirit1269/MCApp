@@ -1,5 +1,6 @@
 using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Data;
+using MotorcycleClubHub.Api.Data;
 using System.Security.Claims;
 
 namespace MotorcycleClubHub.Api.Services

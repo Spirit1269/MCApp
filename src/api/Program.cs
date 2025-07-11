@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Api.Middleware;
 using MotorcycleClubHub.Api.Services;
-using MotorcycleClubHub.Data;
+using MotorcycleClubHub.Api.Data;
 using Microsoft.AspNetCore.Authentication.Google;
 using dotenv.net;
 
@@ -22,7 +22,9 @@ builder.Services.AddCors(options =>
           .WithOrigins(
             "https://blue-field-0f8b9f710.6.azurestaticapps.net",
             "https://tripowersllc.com",
-            "https://www.tripowersllc.com" 
+            "https://www.tripowersllc.com",
+            "https://mcclubhub.com",
+            "https://www.mcclubhub.com"
           )
           .AllowAnyHeader()
           .AllowAnyMethod();
@@ -52,14 +54,22 @@ builder.Services
     .AddCookie("Cookies")
     .AddGoogle(googleOptions =>
     {
-        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        if (string.IsNullOrEmpty(googleClientId) || string.IsNullOrEmpty(googleClientSecret))
+        {
+            throw new InvalidOperationException("Google authentication ClientId or ClientSecret is not configured.");
+        }
+        googleOptions.ClientId = googleClientId;
+        googleOptions.ClientSecret = googleClientSecret;
     });
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IEventPermissionService, EventPermissionService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddScoped<IClubContextService, ClubContextService>();
+builder.Services.AddScoped<IDuesService, DuesService>();
+
 builder.Services.AddControllers();
 
 

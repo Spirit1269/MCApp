@@ -1,8 +1,8 @@
+// src/api/Data/ApplicationDbContext.cs
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
+using MotorcycleClubHub.Data;
 
-namespace MotorcycleClubHub.Data
+namespace MotorcycleClubHub.Api.Data
 {
     public class ApplicationDbContext : DbContext
     {
@@ -62,6 +62,17 @@ namespace MotorcycleClubHub.Data
             modelBuilder.Entity<Member>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.ClubId).IsRequired();
+                entity.Property(e => e.ChapterId).IsRequired();
+                entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.IsApproved).IsRequired();
+                entity.Property(e => e.StripeCustomerId).HasMaxLength(50);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.DisplayName).IsUnique();
+                entity.HasMany(e => e.Roles)
+                      .WithOne(r => r.Member)
+                      .HasForeignKey(r => r.MemberId)
+                      .OnDelete(DeleteBehavior.Cascade);
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.DisplayName).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.AvatarUrl).HasMaxLength(255);
@@ -77,11 +88,11 @@ namespace MotorcycleClubHub.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.RoleName).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.ScopeType).IsRequired().HasMaxLength(10);
-                entity.HasOne(r => r.Member)          // navigation property
-                    .WithMany(m => m.Roles)         // navigation on Member
-                    .HasForeignKey(r => r.MemberId) // FK column
+                entity.HasOne(r => r.Member)
+                    .WithMany(m => m.Roles)
+                    .HasForeignKey(r => r.MemberId)
                     .OnDelete(DeleteBehavior.Cascade);
-    });
+            });
 
             // Post
             modelBuilder.Entity<Post>(entity =>
@@ -116,6 +127,8 @@ namespace MotorcycleClubHub.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Period).IsRequired().HasMaxLength(10);
+                entity.Property(e => e.Date).IsRequired().HasConversion<string>();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.StripeInvoiceId).HasMaxLength(50);
                 entity.HasOne<Chapter>()

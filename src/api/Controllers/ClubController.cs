@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MotorcycleClubHub.Api.Interfaces;
 using MotorcycleClubHub.Data;             // For ApplicationDbContext
+using MotorcycleClubHub.Api.Data;
 
 namespace MotorcycleClubHub.Api.Controllers
 {
@@ -11,14 +12,14 @@ namespace MotorcycleClubHub.Api.Controllers
     public class ClubController : ControllerBase
     {
         private readonly IClubContextService _clubContext;
-        private readonly ApplicationDbContext   _context;
+        private readonly ApplicationDbContext _context;
 
         public ClubController(
             IClubContextService clubContext,
-            ApplicationDbContext  context)
+            ApplicationDbContext context)
         {
             _clubContext = clubContext;
-            _context     = context;
+            _context = context;
         }
 
         [HttpGet("status")]
@@ -50,7 +51,7 @@ namespace MotorcycleClubHub.Api.Controllers
             if (_context.Clubs.Any(c => c.IsSetup))
                 return BadRequest("Club is already set up.");
 
-            club.IsSetup  = true;
+            club.IsSetup = true;
             club.CreatedAt = DateTime.UtcNow;
             _context.Clubs.Add(club);
             _context.SaveChanges();
